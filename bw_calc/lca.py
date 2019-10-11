@@ -53,16 +53,10 @@ class LCA(object):
         """
         if not isinstance(demand, Mapping):
             raise ValueError("Demand must be a dictionary")
-        for key in demand:
-            if not key:
-                raise ValueError("Invalid demand dictionary")
 
         if log_config:
             create_logger(**log_config)
         self.logger = logging.getLogger('bw2calc')
-
-        clean_databases()
-        self._fixed = False
 
         self.demand = demand
         self.method = method
@@ -139,46 +133,8 @@ class LCA(object):
     ### Data manipulation ###
     #########################
 
-    def fix_dictionaries(self):
-        """
-Fix technosphere and biosphere dictionaries from this:
-
-.. code-block:: python
-
-    {mapping integer id: matrix row/column index}
-
-To this:
-
-.. code-block:: python
-
-    {(database, key): matrix row/column index}
-
-This isn't needed for the LCA calculation itself, but is helpful when interpreting results.
-
-Doesn't require any arguments or return anything, but changes ``self.activity_dict``, ``self.product_dict`` and ``self.biosphere_dict``.
-
-        """
-        if self._fixed:
-            # Already fixed - should be idempotent
-            return False
-        elif not mapping:
-            # Don't have access to mapping
-            return False
-        rev_mapping = {v: k for k, v in mapping.items()}
-        self._activity_dict = copy.deepcopy(self.activity_dict)
-        self.activity_dict = {
-            rev_mapping[k]: v for k, v in self.activity_dict.items()}
-        self._product_dict = self.product_dict
-        self.product_dict = {
-            rev_mapping[k]: v for k, v in self.product_dict.items()}
-        self._biosphere_dict = self.biosphere_dict
-        self.biosphere_dict = {
-            rev_mapping[k]: v for k, v in self.biosphere_dict.items()}
-        self._fixed = True
-        return True
-
     def reverse_dict(self):
-        """Construct reverse dicts from technosphere and biosphere row and col indices to activity_dict/product_dict/biosphere_dict keys.
+        """Construct reverse dicts from technosphere and biosphere row and col indices to input values.
 
         Returns:
             (reversed ``self.activity_dict``, ``self.product_dict`` and ``self.biosphere_dict``)
@@ -192,9 +148,8 @@ Doesn't require any arguments or return anything, but changes ``self.activity_di
     ### Data retrieval ###
     ######################
 
-    def load_lci_data(self, fix_dictionaries=True, builder=TBMBuilder):
+    def load_lci_data(self, builder=TBMBuilder):
         """Load data and create technosphere and biosphere matrices."""
-        self._fixed = False
         self.bio_params, self.tech_params, \
             self.biosphere_dict, self.activity_dict, \
             self.product_dict, self.biosphere_matrix, \
@@ -206,8 +161,6 @@ Doesn't require any arguments or return anything, but changes ``self.activity_di
                 "Use LeastSquaresLCA to solve this system, or fix the input "
                 "data").format(len(self.activity_dict), len(self.product_dict))
             )
-        if fix_dictionaries:
-            self.fix_dictionaries()
 
         if not self.biosphere_dict:
             warnings.warn("No biosphere flows found. No inventory results can "
