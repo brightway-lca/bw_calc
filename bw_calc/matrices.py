@@ -1,5 +1,5 @@
 from .indexing import index_with_searchsorted, index_with_arrays
-from .utils import load_arrays, MAX_INT_32, TYPE_DICTIONARY
+from .utils import load_array, MAX_SIGNED_32BIT_INT
 from scipy import sparse
 import numpy as np
 
@@ -31,10 +31,7 @@ and not:
     """
 
     @classmethod
-    def build(cls, paths, data_label,
-              row_id_label, row_index_label,
-              col_id_label=None, col_index_label=None,
-              row_dict=None, col_dict=None, one_d=False, drop_missing=True):
+    def build(cls, array, row_dict=None, col_dict=None, one_d=False, drop_missing=True):
         """
 Build a sparse matrix from NumPy structured array(s).
 
@@ -45,22 +42,22 @@ This method does the following:
 TODO: Update
 
 #. Load and concatenate the :ref:`structured arrays files <building-matrices>` in filepaths ``paths`` using the function :func:`.utils.load_arrays` into a parameter array.
-#. If not ``row_dict``, use :meth:`.build_dictionary` to build ``row_dict`` from the parameter array column ``row_id_label``.
-#. Using the ``row_id_label`` and the ``row_dict``, use the method :meth:`.add_matrix_indices` to add matrix indices to the ``row_index_label`` column.
-#. If not ``one_d``, do the same to ``col_dict`` and ``col_index_label``, using ``col_id_label``.
-#. If not ``one_d``, use :meth:`.build_matrix` to build a sparse matrix using ``data_label`` for the matrix data values, and ``row_index_label`` and ``col_index_label`` for row and column indices.
-#. Else if ``one_d``, use :meth:`.build_diagonal_matrix` to build a diagonal matrix using ``data_label`` for diagonal matrix data values and ``row_index_label`` as row/column indices.
+#. If not ``row_dict``, use :meth:`.build_dictionary` to build ``row_dict`` from the parameter array column ``"row_value"``.
+#. Using the ``"row_value"`` and the ``row_dict``, use the method :meth:`.add_matrix_indices` to add matrix indices to the ``"row_index"`` column.
+#. If not ``one_d``, do the same to ``col_dict`` and ``"col_index"``, using ``"col_value"``.
+#. If not ``one_d``, use :meth:`.build_matrix` to build a sparse matrix using ``"amount"`` for the matrix data values, and ``"row_index"`` and ``"col_index"`` for row and column indices.
+#. Else if ``one_d``, use :meth:`.build_diagonal_matrix` to build a diagonal matrix using ``"amount"`` for diagonal matrix data values and ``"row_index"`` as row/column indices.
 #. Return the loaded parameter arrays from step 1, row and column dicts from steps 2 & 4, and matrix from step 5 or 6.
 
 Args:
     * *paths* (list): List of array filepaths to load.
-    * *data_label* (str): Label of column in parameter arrays with matrix data values.
-    * *row_id_label* (str): Label of column in parameter arrays with row ID values, i.e. the integer values returned from ``mapping``.
-    * *row_index_label* (str): Label of column in parameter arrays where matrix row indices will be stored.
-    * *col_id_label* (str, optional): Label of column in parameter arrays with column ID values, i.e. the integer values returned from ``mapping``. Not needed for diagonal matrices.
-    * *col_index_label* (str, optional): Label of column in parameter arrays where matrix column indices will be stored. Not needed for diagonal matrices.
-    * *row_dict* (dict, optional): Mapping dictionary linking ``row_id_label`` values to ``row_index_label`` values. Will be built if not given.
-    * *col_dict* (dict, optional): Mapping dictionary linking ``col_id_label`` values to ``col_index_label`` values. Will be built if not given.
+    * *"amount"* (str): Label of column in parameter arrays with matrix data values.
+    * *"row_value"* (str): Label of column in parameter arrays with row ID values, i.e. the integer values returned from ``mapping``.
+    * *"row_index"* (str): Label of column in parameter arrays where matrix row indices will be stored.
+    * *"col_value"* (str, optional): Label of column in parameter arrays with column ID values, i.e. the integer values returned from ``mapping``. Not needed for diagonal matrices.
+    * *"col_index"* (str, optional): Label of column in parameter arrays where matrix column indices will be stored. Not needed for diagonal matrices.
+    * *row_dict* (dict, optional): Mapping dictionary linking ``"row_value"`` values to ``"row_index"`` values. Will be built if not given.
+    * *col_dict* (dict, optional): Mapping dictionary linking ``"col_value"`` values to ``"col_index"`` values. Will be built if not given.
     * *one_d* (bool): Build diagonal matrix.
     * *drop_missing* (bool): Remove rows from the parameter array which aren't mapped by ``row_dict`` or ``col_dict``. Default is ``True``. Advanced use only.
 
@@ -68,89 +65,59 @@ Returns:
     A :ref:`numpy parameter array <building-matrices>`, the row mapping dictionary, the column mapping dictionary, and a COO sparse matrix.
 
         """
-        assert isinstance(paths, (tuple, list, set)), "``paths`` must be a list"
-        array = load_arrays(paths)
-
         if not row_dict:
             row_dict = index_with_searchsorted(
-                array[row_id_label],
-                array[row_index_label]
+                array["row_value"],
+                array["row_index"]
             )
         else:
             index_with_arrays(
-                array[row_id_label],
-                array[row_index_label],
+                array["row_value"],
+                array["row_index"],
                 row_dict
             )
 
         if one_d:
             # Eliminate references to row data which isn't used;
-            # Unused data remains MAX_INT_32 values
+            # Unused data remains MAX_SIGNED_32BIT_INT values
             if drop_missing:
-                array = array[np.where(array[row_index_label] != MAX_INT_32)]
-            matrix = cls.build_diagonal_matrix(array, row_dict, row_index_label, data_label)
+                array = array[np.where(array["row_index"] != MAX_SIGNED_32BIT_INT)]
+            matrix = cls.build_matrix(array, row_dict, one_d=True)
         else:
             if not col_dict:
                 col_dict = index_with_searchsorted(
-                    array[col_id_label],
-                    array[col_index_label]
+                    array["col_value"],
+                    array["col_index"]
                 )
             else:
                 index_with_arrays(
-                    array[col_id_label],
-                    array[col_index_label],
+                    array["col_value"],
+                    array["col_index"],
                     col_dict
                 )
 
             if drop_missing:
-                array = array[np.where(array[row_index_label] != MAX_INT_32)]
-                array = array[np.where(array[col_index_label] != MAX_INT_32)]
-            matrix = cls.build_matrix(
-                array, row_dict, col_dict, row_index_label, col_index_label,
-                data_label)
-        return array, row_dict, col_dict, matrix
+                array = array[np.where(array["row_index"] != MAX_SIGNED_32BIT_INT)]
+                array = array[np.where(array["col_index"] != MAX_SIGNED_32BIT_INT)]
+
+            matrix = cls.build_matrix(array, row_dict, col_dict)
+        return row_dict, col_dict, matrix
 
     @classmethod
-    def build_matrix(cls, array, row_dict, col_dict, row_index_label,
-                     col_index_label, data_label=None, new_data=None):
+    def build_matrix(cls, array, row_dict, col_dict=None, one_d=False, new_data=None):
         """Build sparse matrix."""
-        vector = array[data_label] if new_data is None else new_data
+        vector = (array["amount"] if new_data is None else new_data).copy()
         assert vector.shape[0] == array.shape[0], "Incompatible data & indices"
+        vector[array["flip"]] *= -1
         # coo_matrix construction is coo_matrix((values, (rows, cols)),
         # (row_count, col_count))
-        return sparse.coo_matrix((
-            vector.astype(np.float64),
-            (array[row_index_label], array[col_index_label])),
-            (len(row_dict), len(col_dict))).tocsr()
-
-    @classmethod
-    def build_diagonal_matrix(cls, array, row_dict, index_label,
-                              data_label=None, new_data=None):
-        """Build diagonal sparse matrix."""
-        return cls.build_matrix(array, row_dict, row_dict, index_label, index_label, data_label, new_data)
-
-
-
-
-
-    @classmethod
-    def get_technosphere_inputs_mask(cls, array):
-        """Get boolean mask of technosphere inputs from ``array`` (i.e. the ones to include when building the technosphere matrix)."""
-        return np.where(
-            array["type"] == TYPE_DICTIONARY["technosphere"]
-        )
-
-    @classmethod
-    def fix_supply_use(cls, array, vector):
-        """Make technosphere inputs negative."""
-        # Inputs are consumed, so are negative
-        mask = cls.get_technosphere_inputs_mask(array)
-        vector[mask] = -1 * vector[mask]
-        return vector
-
-    @classmethod
-    def build_technosphere_matrix(cls, array, activity_dict, product_dict, new_data=None):
-        vector = array["amount"] if new_data is None else new_data
-        vector = cls.fix_supply_use(array, vector.copy())
-        return cls.build_matrix(array, product_dict, activity_dict, "row",
-                                "col", "amount", vector)
+        if one_d:
+            return sparse.coo_matrix((
+                vector.astype(np.float64),
+                (array["row_index"], array["row_index"])),
+                (len(row_dict), len(row_dict))).tocsr()
+        else:
+            return sparse.coo_matrix((
+                vector.astype(np.float64),
+                (array["row_index"], array["col_index"])),
+                (len(row_dict), len(col_dict))).tocsr()

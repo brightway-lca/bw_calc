@@ -8,16 +8,11 @@ from .errors import (
 )
 from .log_utils import create_logger
 from .matrices import MatrixBuilder
-from .utils import (
-    global_index,
-    get_filepaths,
-    load_arrays,
-)
-import copy
+from .utils import filter_data_for_matrix, load_data_obj
 import numpy as np
 import logging
 import warnings
-import pandas
+# import pandas
 from collections.abc import Mapping
 
 try:
@@ -25,7 +20,7 @@ try:
 except ImportError:
     from scipy.sparse.linalg import factorized, spsolve
 try:
-    from presamples import PackagesDataLoader
+    from overrides import PackagesDataLoader
 except ImportError:
     PackagesDataLoader = None
 
@@ -40,7 +35,7 @@ class LCA(object):
     ### Setup ###
     #############
 
-    def __init__(self, demand, data_obj, log_config=None, overrides=None):
+    def __init__(self, demand, data_objs, log_config=None, overrides=None, seed=None, ignore_override_seed=None):
         """Create a new LCA calculation.
 
         Args:
@@ -56,54 +51,35 @@ class LCA(object):
 
         if log_config:
             create_logger(**log_config)
-        self.logger = logging.getLogger('bw2calc')
+        self.logger = logging.getLogger('bw_calc')
 
         self.demand = demand
-        self.method = method
-        self.normalization = normalization
-        self.weighting = weighting
-        self.database_filepath = database_filepath
-        self.seed = seed
+        self.data_objs = [load_data_obj(o) for o in data_objs]
 
-        if presamples and PackagesDataLoader is None:
-            warnings.warn("Skipping presamples; `presamples` not installed")
-            self.presamples = None
-        elif presamples:
+        if overrides and PackagesDataLoader is None:
+            warnings.warn("Skipping overrides; `overrides` not installed")
+            self.overrides = None
+        elif overrides:
             # Iterating over a `Campaign` object will also return the presample filepaths
-            self.presamples = PackagesDataLoader(
-                dirpaths=presamples,
-                seed=self.seed if override_presamples_seed else None,
+            self.overrides = PackagesDataLoader(
+                dirpaths=overrides,
+                seed=self.seed if ignore_override_seed else None,
                 lca=self
             )
         else:
-            self.presamples = None
-
-        self.database_filepath, \
-            self.method_filepath, \
-            self.weighting_filepath, \
-            self.normalization_filepath = \
-            self.get_array_filepaths()
+            self.overrides = None
 
         self.logger.info("Created LCA object", extra={
-            'demand': wrap_functional_unit(self.demand),
-            'database_filepath': self.database_filepath,
-            'method': self.method,
-            'method_filepath': self.method_filepath,
-            'normalization': self.normalization,
-            'normalization_filepath': self.normalization_filepath,
-            'presamples': str(self.presamples),
-            'weighting': self.weighting,
-            'weighting_filepath': self.weighting_filepath,
+            'demand': self.demand,
+            # 'database_filepath': self.database_filepath,
+            # 'method': self.method,
+            # 'method_filepath': self.method_filepath,
+            # 'normalization': self.normalization,
+            # 'normalization_filepath': self.normalization_filepath,
+            # 'overrides': str(self.overrides),
+            # 'weighting': self.weighting,
+            # 'weighting_filepath': self.weighting_filepath,
         })
-
-    def get_array_filepaths(self):
-        """Use utility functions to get all array filepaths"""
-        return (
-            get_filepaths(self.demand, "demand"),
-            get_filepaths(self.method, "method"),
-            get_filepaths(self.weighting, "weighting"),
-            get_filepaths(self.normalization, "normalization"),
-        )
 
     def build_demand_array(self, demand=None):
         """Turn the demand dictionary into a *NumPy* array of correct size.
@@ -148,13 +124,12 @@ class LCA(object):
     ### Data retrieval ###
     ######################
 
-    def load_lci_data(self, builder=TBMBuilder):
+    def load_lci_data(self):
         """Load data and create technosphere and biosphere matrices."""
-        self.bio_params, self.tech_params, \
-            self.biosphere_dict, self.activity_dict, \
-            self.product_dict, self.biosphere_matrix, \
-            self.technosphere_matrix = \
-            builder.build(self.database_filepath)
+        self.tech_params = filter_data_for_matrix(self.data_objs, "technosphere")
+        self.product_dict, self.activity_dict, self.technosphere_matrix = MatrixBuilder.build(self.tech_params)
+        self.bio_params = filter_data_for_matrix(self.data_objs, "biosphere")
+        self.biosphere_dict, _, self.biosphere_matrix = MatrixBuilder.build(self.bio_params, col_dict=self.activity_dict)
         if len(self.activity_dict) != len(self.product_dict):
             raise NonsquareTechnosphere((
                 "Technosphere matrix is not square: {} activities (columns) and {} products (rows). "
@@ -167,58 +142,46 @@ class LCA(object):
                           "be calculated, `lcia` will raise an error")
 
         # Only need to index here for traditional LCA
-        if self.presamples:
-            self.presamples.index_arrays(self)
-            self.presamples.update_matrices(
+        if self.overrides:
+            self.overrides.index_arrays(self)
+            self.overrides.update_matrices(
                 matrices=('technosphere_matrix', 'biosphere_matrix')
             )
 
-    def load_lcia_data(self, builder=MatrixBuilder):
+    def load_lcia_data(self):
         """Load data and create characterization matrix.
 
-        This method will filter out regionalized characterization factors. This filtering needs access to ``bw2data`` - therefore, regionalized methods will cause incorrect results if ``bw2data`` is not importable.
-
         """
-        self.cf_params, _, _, self.characterization_matrix = builder.build(
-                self.method_filepath,
-                "amount",
-                "flow",
-                "row",
-                row_dict=self._biosphere_dict,
-                one_d=True,
-            )
-        if global_index is not None:
-            mask = self.cf_params['geo'] == global_index
-            self.cf_params = self.cf_params[mask]
-            self.characterization_matrix = builder.build_diagonal_matrix(self.cf_params, self._biosphere_dict, "row", "amount")
+        self.cf_params = filter_data_for_matrix(self.data_objs, "characterization")
+        _, _, self.characterization_matrix = MatrixBuilder.build(self.cf_params, self.biosphere_dict, one_d=True)
 
-        if self.presamples:
-            self.presamples.update_matrices(matrices=['characterization_matrix'])
+        if self.overrides:
+            self.overrides.update_matrices(matrices=['characterization_matrix'])
 
-    def load_normalization_data(self, builder=MatrixBuilder):
-        """Load normalization data."""
-        self.normalization_params, _, _, self.normalization_matrix = \
-            builder.build(
-                self.normalization_filepath,
-                "amount",
-                "flow",
-                "index",
-                row_dict=self._biosphere_dict,
-                one_d=True
-            )
-        if self.presamples:
-            self.presamples.update_matrices(matrices=['normalization_matrix',])
+    # def load_normalization_data(self):
+    #     """Load normalization data."""
+    #     self.normalization_params, _, _, self.normalization_matrix = \
+    #         builder.build(
+    #             self.normalization_filepath,
+    #             "amount",
+    #             "flow",
+    #             "index",
+    #             row_dict=self._biosphere_dict,
+    #             one_d=True
+    #         )
+    #     if self.overrides:
+    #         self.overrides.update_matrices(matrices=['normalization_matrix',])
 
-    def load_weighting_data(self):
-        """Load weighting data, a 1-element array."""
-        self.weighting_params = load_arrays(
-            self.weighting_filepath
-        )
-        self.weighting_value = self.weighting_params['amount']
+    # def load_weighting_data(self):
+    #     """Load weighting data, a 1-element array."""
+    #     self.weighting_params = load_array(
+    #         self.weighting_filepath
+    #     )
+    #     self.weighting_value = self.weighting_params['amount']
 
-        # TODO: This won't work because weighting is a value not a matrix
-        # if self.presamples:
-        #     self.presamples.update_matrices(self, ['weighting_value',])
+    #     # TODO: This won't work because weighting is a value not a matrix
+    #     # if self.overrides:
+    #     #     self.overrides.update_matrices(self, ['weighting_value',])
 
     ####################
     ### Calculations ###
@@ -255,8 +218,7 @@ If the technosphere matrix has already been factorized, then the decomposed tech
                 self.technosphere_matrix,
                 self.demand_array)
 
-    def lci(self, factorize=False,
-            builder=TBMBuilder):
+    def lci(self, factorize=False):
         """
 Calculate a life cycle inventory.
 
@@ -273,7 +235,7 @@ Args:
 Doesn't return anything, but creates ``self.supply_array`` and ``self.inventory``.
 
         """
-        self.load_lci_data(builder)
+        self.load_lci_data()
         self.build_demand_array()
         if factorize:
             self.decompose_technosphere()
@@ -291,7 +253,7 @@ Doesn't return anything, but creates ``self.supply_array`` and ``self.inventory`
         self.inventory = self.biosphere_matrix * \
             sparse.spdiags([self.supply_array], [0], count, count)
 
-    def lcia(self, builder=MatrixBuilder):
+    def lcia(self):
         """
 Calculate the life cycle impact assessment.
 
@@ -305,11 +267,10 @@ Doesn't return anything, but creates ``self.characterized_inventory``.
 
         """
         assert hasattr(self, "inventory"), "Must do lci first"
-        assert self.method, "Must specify a method to perform LCIA"
         if not self.biosphere_dict:
             raise EmptyBiosphere
 
-        self.load_lcia_data(builder)
+        self.load_lcia_data()
         self.lcia_calculation()
 
     def lcia_calculation(self):
@@ -335,25 +296,25 @@ Doesn't return anything, but creates ``self.characterized_inventory``.
         self.normalized_inventory = \
             self.normalization_matrix * self.characterized_inventory
 
-    def weight(self):
-        """Multiply characterized inventory by weighting value.
+    # def weight(self):
+    #     """Multiply characterized inventory by weighting value.
 
-        Can be done with or without normalization."""
-        assert hasattr(self, "characterized_inventory"), "Must do lcia first"
-        if not hasattr(self, "weighting_value"):
-            self.load_weighting_data()
+    #     Can be done with or without normalization."""
+    #     assert hasattr(self, "characterized_inventory"), "Must do lcia first"
+    #     if not hasattr(self, "weighting_value"):
+    #         self.load_weighting_data()
 
-    def weighting_calculation(self):
-        """The actual weighting calculation.
+    # def weighting_calculation(self):
+    #     """The actual weighting calculation.
 
-        Multiples weighting value by normalized inventory, if available, otherwise by characterized inventory.
+    #     Multiples weighting value by normalized inventory, if available, otherwise by characterized inventory.
 
-        Creates ``self.weighted_inventory``."""
-        if hasattr(self, "normalized_inventory"):
-            obj = self.normalized_inventory
-        else:
-            obj = self.characterized_inventory
-        self.weighted_inventory = self.weighting_value[0] * obj
+    #     Creates ``self.weighted_inventory``."""
+    #     if hasattr(self, "normalized_inventory"):
+    #         obj = self.normalized_inventory
+    #     else:
+    #         obj = self.characterized_inventory
+    #     self.weighted_inventory = self.weighting_value[0] * obj
 
     @property
     def score(self):
@@ -363,9 +324,9 @@ The LCIA score as a ``float``.
 Note that this is a `property <http://docs.python.org/2/library/functions.html#property>`_, so it is ``foo.lca``, not ``foo.score()``
         """
         assert hasattr(self, "characterized_inventory"), "Must do LCIA first"
-        if self.weighting:
-            assert hasattr(self, "weighted_inventory"), "Must do weighting first"
-            return float(self.weighted_inventory.sum())
+        # if self.weighting:
+        #     assert hasattr(self, "weighted_inventory"), "Must do weighting first"
+        #     return float(self.weighted_inventory.sum())
         return float(self.characterized_inventory.sum())
 
     #########################
@@ -382,9 +343,7 @@ Note that this is a `property <http://docs.python.org/2/library/functions.html#p
 
         """
         self.technosphere_matrix = MatrixBuilder.build_matrix(
-            self.tech_params, self._activity_dict, self._product_dict,
-            "row", "col",
-            new_data=TBMBuilder.fix_supply_use(self.tech_params, vector.copy())
+            self.tech_params, self.product_dict, self.activity_dict, new_data=vector
         )
 
     def rebuild_biosphere_matrix(self, vector):
@@ -397,8 +356,8 @@ Note that this is a `property <http://docs.python.org/2/library/functions.html#p
 
         """
         self.biosphere_matrix = MatrixBuilder.build_matrix(
-            self.bio_params, self._biosphere_dict, self._activity_dict,
-            "row", "col", new_data=vector)
+            self.bio_params, self.biosphere_dict, self.activity_dict, new_data=vector
+        )
 
     def rebuild_characterization_matrix(self, vector):
         """Build a new characterization matrix using the same row and column indices, but different values. Useful for Monte Carlo iteration or sensitivity analysis.
@@ -409,31 +368,9 @@ Note that this is a `property <http://docs.python.org/2/library/functions.html#p
         Doesn't return anything, but overwrites ``self.characterization_matrix``.
 
         """
-        self.characterization_matrix = MatrixBuilder.build_diagonal_matrix(
-            self.cf_params, self._biosphere_dict,
-            "row", "row", new_data=vector)
-
-    def switch_method(self, method):
-        """Switch to LCIA method `method`"""
-        self.method = method
-        _, self.method_filepath, _, _ = self.get_array_filepaths()
-        self.load_lcia_data()
-        self.logger.info("Switching LCIA method", extra={'method': method})
-
-    def switch_normalization(self, normalization):
-        """Switch to LCIA normalization `normalization`"""
-        self.normalization = normalization
-        _, _, _, self.normalization_filepath = self.get_array_filepaths()
-        self.load_normalization_data()
-        self.logger.info("Switching LCIA normalization",
-                         extra={'normalization': normalization})
-
-    def switch_weighting(self, weighting):
-        """Switch to LCIA weighting `weighting`"""
-        self.weighting = weighting
-        _, _, self.weighting_filepath, _ = self.get_array_filepaths()
-        self.load_weighting_data()
-        self.logger.info("Switching LCIA weighting", extra={'weighting': weighting})
+        self.characterization_matrix = MatrixBuilder.build_matrix(
+            self.cf_params, self.biosphere_dict, one_d=True, new_data=vector
+        )
 
     def redo_lci(self, demand=None):
         """Redo LCI with same databases but different demand.
@@ -450,7 +387,7 @@ Note that this is a `property <http://docs.python.org/2/library/functions.html#p
         if demand is not None:
             self.build_demand_array(demand)
         self.lci_calculation()
-        self.logger.info("Redoing LCI", extra={'demand': wrap_functional_unit(demand or self.demand)})
+        self.logger.info("Redoing LCI", extra={'demand': demand or self.demand})
 
     def redo_lcia(self, demand=None):
         """Redo LCIA, optionally with new demand.
@@ -465,55 +402,54 @@ Note that this is a `property <http://docs.python.org/2/library/functions.html#p
         if demand is not None:
             self.redo_lci(demand)
         self.lcia_calculation()
-        self.logger.info("Redoing LCIA", extra={'demand': wrap_functional_unit(demand or self.demand)})
+        self.logger.info("Redoing LCIA", extra={'demand': demand or self.demand})
 
-    def to_dataframe(self, cutoff=200):
-        """Return all nonzero elements of characterized inventory as Pandas dataframe"""
-        assert mapping, "This method doesn't work with independent LCAs"
-        assert pandas, "This method requires the `pandas` (http://pandas.pydata.org/) library"
-        assert hasattr(self, "characterized_inventory"), "Must do LCIA calculation first"
+    # def to_dataframe(self, cutoff=200):
+    #     """Return all nonzero elements of characterized inventory as Pandas dataframe"""
+    #     assert pandas, "This method requires the `pandas` (http://pandas.pydata.org/) library"
+    #     assert hasattr(self, "characterized_inventory"), "Must do LCIA calculation first"
 
-        from bw2data import get_activity
+    #     from bw2data import get_activity
 
-        coo = self.characterized_inventory.tocoo()
-        stacked = np.vstack([np.abs(coo.data), coo.row, coo.col, coo.data])
-        stacked.sort()
-        rev_activity, _, rev_bio = self.reverse_dict()
-        length = stacked.shape[1]
+    #     coo = self.characterized_inventory.tocoo()
+    #     stacked = np.vstack([np.abs(coo.data), coo.row, coo.col, coo.data])
+    #     stacked.sort()
+    #     rev_activity, _, rev_bio = self.reverse_dict()
+    #     length = stacked.shape[1]
 
-        data = []
-        for x in range(min(cutoff, length)):
-            if stacked[3, length - x - 1] == 0.:
-                continue
-            activity = get_activity(rev_activity[stacked[2, length - x - 1]])
-            flow = get_activity(rev_bio[stacked[1, length - x - 1]])
-            data.append((
-                activity['name'],
-                flow['name'],
-                activity.get('location'),
-                stacked[3, length - x - 1]
-            ))
-        return pandas.DataFrame(
-            data,
-            columns=['Activity', 'Flow', 'Region', 'Amount']
-        )
+    #     data = []
+    #     for x in range(min(cutoff, length)):
+    #         if stacked[3, length - x - 1] == 0.:
+    #             continue
+    #         activity = get_activity(rev_activity[stacked[2, length - x - 1]])
+    #         flow = get_activity(rev_bio[stacked[1, length - x - 1]])
+    #         data.append((
+    #             activity['name'],
+    #             flow['name'],
+    #             activity.get('location'),
+    #             stacked[3, length - x - 1]
+    #         ))
+    #     return pandas.DataFrame(
+    #         data,
+    #         columns=['Activity', 'Flow', 'Region', 'Amount']
+    #     )
 
     ####################
     ### Contribution ###
     ####################
 
-    def top_emissions(self, **kwargs):
-        """Call ``bw2analyzer.ContributionAnalyses.annotated_top_emissions``"""
-        try:
-            from bw2analyzer import ContributionAnalysis
-        except ImportError:
-            raise ImportError("`bw2analyzer` is not installed")
-        return ContributionAnalysis().annotated_top_emissions(self, **kwargs)
+    # def top_emissions(self, **kwargs):
+    #     """Call ``bw2analyzer.ContributionAnalyses.annotated_top_emissions``"""
+    #     try:
+    #         from bw2analyzer import ContributionAnalysis
+    #     except ImportError:
+    #         raise ImportError("`bw2analyzer` is not installed")
+    #     return ContributionAnalysis().annotated_top_emissions(self, **kwargs)
 
-    def top_activities(self, **kwargs):
-        """Call ``bw2analyzer.ContributionAnalyses.annotated_top_processes``"""
-        try:
-            from bw2analyzer import ContributionAnalysis
-        except ImportError:
-            raise ImportError("`bw2analyzer` is not installed")
-        return ContributionAnalysis().annotated_top_processes(self, **kwargs)
+    # def top_activities(self, **kwargs):
+    #     """Call ``bw2analyzer.ContributionAnalyses.annotated_top_processes``"""
+    #     try:
+    #         from bw2analyzer import ContributionAnalysis
+    #     except ImportError:
+    #         raise ImportError("`bw2analyzer` is not installed")
+    #     return ContributionAnalysis().annotated_top_processes(self, **kwargs)

@@ -30,3 +30,8 @@ class MalformedFunctionalUnit(BrightwayCalcError):
 class EmptyBiosphere(BrightwayCalcError):
     """Can't do impact assessment with no biosphere flows"""
     pass
+
+
+class NoArrays(BrightwayCalcError):
+    """No arrays for given matrix"""
+    pass
