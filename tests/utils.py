@@ -1,13 +1,22 @@
-# from io import BytesIO
+from pathlib import Path
+from io import BytesIO
+import numpy as np
+import pytest
+from bw_calc.utils import (
+   load_data_obj,
+)
 
-# import numpy as np
 
-# from bw2calc.utils import get_seed, wrap_functional_unit, os, load_array
-# import multiprocessing
-# import pytest
-# import sys
+fixtures_dir = Path(__file__, "..").resolve() / "fixtures"
 
-# MAX_INT_32 = 4294967295
+
+def test_load_data_obj_zipfile():
+    pass
+
+
+def test_load_data_obj_directory():
+    pass
+
 
 
 # @pytest.mark.skipif(sys.version_info < (3,0), reason="MP pool changes")

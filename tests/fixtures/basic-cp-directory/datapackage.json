@@ -1,0 +1,42 @@
+{
+  "profile": "data-package",
+  "name": "test-fixture-basic-matrices-directory",
+  "id": "e4e42389637a4c8b9f81d79b8e8eb97a",
+  "licenses": [
+    {
+      "name": "ODC-PDDL-1.0",
+      "path": "http://opendatacommons.org/licenses/pddl/",
+      "title": "Open Data Commons Public Domain Dedication and License v1.0"
+    }
+  ],
+  "resources": [
+    {
+      "format": "npy",
+      "mediatype": "application/octet-stream",
+      "path": "d883618c4c66408d904569e98c73a7bb.npy",
+      "name": "basic-technosphere",
+      "md5": "bd1d60c100c6e7734db261abd5bba85b",
+      "profile": "data-resource",
+      "matrix": "technosphere"
+    },
+    {
+      "format": "npy",
+      "mediatype": "application/octet-stream",
+      "path": "c983a140ce2f4eeb88a32d62e418913e.npy",
+      "name": "basic-biosphere",
+      "md5": "304c905d2ec7e98bb1f4284efb210a94",
+      "profile": "data-resource",
+      "matrix": "biosphere"
+    },
+    {
+      "format": "npy",
+      "mediatype": "application/octet-stream",
+      "path": "20c69ae8815f4026bb1f14f54ba8d8f9.npy",
+      "name": "basic-characterization",
+      "md5": "16dbe752c1ceedabe3bc6e69647220bc",
+      "profile": "data-resource",
+      "matrix": "characterization"
+    }
+  ],
+  "created": "2019-10-13T20:24:32.367032Z"
+}

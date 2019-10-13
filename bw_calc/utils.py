@@ -10,11 +10,11 @@ MAX_SIGNED_32BIT_INT = 2147483647
 
 def load_data_obj(data_obj, check_integrity=True):
     """Load a data obj, provided as either a filepath, a directory path, or a dict."""
+    result = {}
     if isinstance(data_obj, dict):
         return data_obj
     elif isinstance(data_obj, str):
         if Path(data_obj).is_file() and data_obj.endswith(".zip"):
-            result = {}
             zf = zipfile.ZipFile(data_obj)
             assert "datapackage.json" in zf.namelist(), "Missing datapackage"
             result = {'datapackage': json.load(zf.open("datapackage.json"))}
@@ -22,7 +22,11 @@ def load_data_obj(data_obj, check_integrity=True):
                 result[resource['path']] = np.load(zf.open(resource['path']))
             return result
         elif Path(data_obj).is_dir():
-            pass
+            dp = Path(data_obj)
+            assert (dp / "datapackage.json").is_file(), "Missing datapackage"
+            result = {'datapackage': json.load(open(dp / "datapackage.json"))}
+            for resource in result['datapackage']['resources']:
+                result[resource['path']] = np.load(dp / resource['path'])
             return result
     raise ValueError(f"Can't understand data_obj: '{data_obj}'")
 
@@ -72,7 +76,7 @@ def get_seed(seed=None):
     """Get valid Numpy random seed value"""
     # https://groups.google.com/forum/#!topic/briansupport/9ErDidIBBFM
     random = np.random.RandomState(seed)
-    return random.randint(0, MAX_SIGNED_INT_32)
+    return random.randint(0, MAX_SIGNED_32BIT_INT)
 
 
 def md5(filepath, blocksize=65536):

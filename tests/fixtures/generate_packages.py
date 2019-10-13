@@ -38,6 +38,10 @@ def generate_basic_matrices():
     fp = create_calculation_package(directory, "test-fixture-basic-matrices", resources)
     fp.rename(directory / "basic-calculation-package.zip")
 
+    directory = base_dir / "basic-cp-directory"
+    directory.mkdir(mode=0o755, exist_ok=True)
+    create_calculation_package(directory, "test-fixture-basic-matrices-directory", resources, compress=False)
+
 
 if __name__ == "__main__":
     generate_basic_matrices()
