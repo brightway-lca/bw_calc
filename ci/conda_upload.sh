@@ -1,9 +1,11 @@
 # Only need to change these two variables
-PKG_NAME=<your_library_name>-dev
-USER=<your conda username>
+PKG_NAME=bw_calc-dev
+USER=cmutel
 
 mkdir ~/conda-bld
 conda config --set anaconda_upload no
+conda config --add channels haasad
+conda config --add channels conda-forge
 export CONDA_BLD_PATH=~/conda-bld
 export VERSION=`date +%Y.%m.%d`
 conda build . --old-build-string

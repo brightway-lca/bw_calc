@@ -23,13 +23,14 @@ before_install:
       hash -r;
       conda config --set always_yes yes --set changeps1 no;
       conda config --append channels conda-forge;
+      conda config --append channels haasad;
       conda update conda;
       conda info -a;
       echo $(python --version);
     fi
 install:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
-      conda create -n test-environment python=$TRAVIS_PYTHON_VERSION <add your conda dependencies here> pytest pytest-cov coveralls;
+      conda create -n test-environment python=$TRAVIS_PYTHON_VERSION pypardiso numpy scipy pytest pytest-cov coveralls;
       source activate test-environment;
       pip install -e .;
     else
@@ -40,8 +41,8 @@ script:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
       pwd;
       ls;
-      pytest --cov=<your_library_name>;
-      coveralls;
+      pytest --cov=bw_calc;
+      # coveralls;
       if [ "$TRAVIS_BRANCH" = "master" -a "$TRAVIS_PULL_REQUEST" = "false" ]; then
         conda install conda-build anaconda-client conda-verify;
         bash ci/conda_upload.sh;

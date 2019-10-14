@@ -1,18 +1,17 @@
 # -*- coding: utf-8 -*-
-from scipy import sparse
-import numpy as np
 from .errors import (
     NonsquareTechnosphere,
     OutsideTechnosphere,
 )
+# import pandas
 from .log_utils import create_logger
 from .matrices import MatrixBuilder
 from .utils import filter_data_for_matrix, load_data_obj
-import numpy as np
-import logging
-import warnings
-# import pandas
 from collections.abc import Mapping
+from scipy import sparse
+import logging
+import numpy as np
+import warnings
 
 try:
     from pypardiso import factorized, spsolve

@@ -1,5 +1,5 @@
 package:
-  name: <your_library_name>-dev
+  name: bw_calc-dev
   version: {{ environ['VERSION'] }}
 
 source:
@@ -19,14 +19,16 @@ requirements:
     - setuptools
   run:
     - python
-    - <other conda dependencies>
+    - numpy
+    - scipy
+    - pypardiso
 
 test:
   imports:
     - {{ name }}
 
 about:
-  home: <Github repo URL>
+  home: "https://github.com/brightway-lca/brightway_calc"
   license: BSD License
-  summary: '<One line description>'
+  summary: 'Matrix calculations for Brightway framework'
 license_family: BSD
