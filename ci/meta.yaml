@@ -25,7 +25,7 @@ requirements:
 
 test:
   imports:
-    - {{ name }}
+    - bw_calc
 
 about:
   home: "https://github.com/brightway-lca/brightway_calc"
