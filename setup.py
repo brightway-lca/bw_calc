@@ -7,12 +7,6 @@ if root_dir:
     os.chdir(root_dir)
 
 
-# TODO
-# Change `url`
-# Change the PyPI classifiers: https://pypi.org/pypi?%3Aaction=list_classifiers
-
-
-# Probably should be changed, __init__.py is no longer required for Python 3
 for dirpath, dirnames, filenames in os.walk('bw_calc'):
     # Ignore dirnames that start with '.'
     if '__init__.py' in filenames:
@@ -38,13 +32,13 @@ setup(
     author_email="cmutel@gmail.com",
     license="BSD 3-clause",
     install_requires=[
-        'appdirs',
-        'docopt',
+        'scipy',
+        'numpy',
     ],
-    url="your_url_here",
+    url="https://github.com/brightway-lca/brightway_calc",
     long_description_content_type='text/markdown',
     long_description=open('README.md').read(),
-    description='your_name_here',
+    description='Matrix calculations for Brightway framework',
     classifiers=[
         'Intended Audience :: End Users/Desktop',
         'Intended Audience :: Developers',

@@ -13,8 +13,8 @@ def load_data_obj(data_obj, check_integrity=True):
     result = {}
     if isinstance(data_obj, dict):
         return data_obj
-    elif isinstance(data_obj, str):
-        if Path(data_obj).is_file() and data_obj.endswith(".zip"):
+    elif isinstance(data_obj, (str, Path)):
+        if Path(data_obj).is_file() and str(data_obj).endswith(".zip"):
             zf = zipfile.ZipFile(data_obj)
             assert "datapackage.json" in zf.namelist(), "Missing datapackage"
             result = {'datapackage': json.load(zf.open("datapackage.json"))}

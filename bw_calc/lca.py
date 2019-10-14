@@ -2,7 +2,6 @@
 from scipy import sparse
 import numpy as np
 from .errors import (
-    EmptyBiosphere,
     NonsquareTechnosphere,
     OutsideTechnosphere,
 )
@@ -137,9 +136,9 @@ class LCA(object):
                 "data").format(len(self.activity_dict), len(self.product_dict))
             )
 
-        if not self.biosphere_dict:
-            warnings.warn("No biosphere flows found. No inventory results can "
-                          "be calculated, `lcia` will raise an error")
+        # if not self.biosphere_dict:
+        #     warnings.warn("No biosphere flows found. No inventory results can "
+        #                   "be calculated, `lcia` will raise an error")
 
         # Only need to index here for traditional LCA
         if self.overrides:
@@ -267,9 +266,6 @@ Doesn't return anything, but creates ``self.characterized_inventory``.
 
         """
         assert hasattr(self, "inventory"), "Must do lci first"
-        if not self.biosphere_dict:
-            raise EmptyBiosphere
-
         self.load_lcia_data()
         self.lcia_calculation()
 
