@@ -35,12 +35,12 @@ def generate_basic_matrices():
             dictionary_formatter({'row': 2, 'amount': 100.}),
         ],
     }]
-    fp = create_calculation_package(directory, "test-fixture-basic-matrices", resources)
+    fp = create_calculation_package(name="test-fixture-basic-matrices", resources=resources, path=directory)
     fp.rename(directory / "basic-calculation-package.zip")
 
     directory = base_dir / "basic-cp-directory"
     directory.mkdir(mode=0o755, exist_ok=True)
-    create_calculation_package(directory, "test-fixture-basic-matrices-directory", resources, compress=False)
+    create_calculation_package(name="test-fixture-basic-matrices-directory", resources=resources, path=directory, compress=False)
 
 
 if __name__ == "__main__":
