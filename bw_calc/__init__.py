@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+from .version import version as __version__
 
 # __all__ = [
 #     'ComparativeMonteCarlo',
@@ -20,8 +20,6 @@
 #     'save_calculation_package',
 #     'TechnosphereBiosphereMatrixBuilder',
 # ]
-
-__version__ = (3, 0, "dev")
 
 from .lca import LCA
 # from .dense_lca import DenseLCA
