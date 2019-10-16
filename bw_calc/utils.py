@@ -19,14 +19,14 @@ def load_data_obj(data_obj, check_integrity=True):
             assert "datapackage.json" in zf.namelist(), "Missing datapackage"
             result = {'datapackage': json.load(zf.open("datapackage.json"))}
             for resource in result['datapackage']['resources']:
-                result[resource['path']] = np.load(zf.open(resource['path']))
+                result[resource['path']] = np.load(zf.open(resource['path']), allow_pickle=False)
             return result
         elif Path(data_obj).is_dir():
             dp = Path(data_obj)
             assert (dp / "datapackage.json").is_file(), "Missing datapackage"
             result = {'datapackage': json.load(open(dp / "datapackage.json"))}
             for resource in result['datapackage']['resources']:
-                result[resource['path']] = np.load(dp / resource['path'])
+                result[resource['path']] = np.load(dp / resource['path'], allow_pickle=False)
             return result
     raise ValueError(f"Can't understand data_obj: '{data_obj}'")
 
