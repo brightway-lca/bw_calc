@@ -1,4 +1,4 @@
-from brightway_projects.processing import (
+from bw_processing import (
     create_calculation_package,
     dictionary_formatter,
 )
@@ -34,7 +34,8 @@ def test_basic_calculation_directory():
 def test_basic_calculation_in_memory():
     resources = [
         {
-            "name": "a",
+            "name": "basic-technosphere",
+            "path": "a.npy",
             "matrix": "technosphere",
             "data": [
                 dictionary_formatter({"row": 3, "col": 5, "amount": 1.0}),
@@ -44,6 +45,7 @@ def test_basic_calculation_in_memory():
         },
         {
             "name": "basic-biosphere",
+            "path": "b.npy",
             "matrix": "biosphere",
             "data": [
                 dictionary_formatter({"row": 1, "col": 5, "amount": 3.0}),
@@ -52,6 +54,7 @@ def test_basic_calculation_in_memory():
         },
         {
             "name": "basic-characterization",
+            "path": "c.npy",
             "matrix": "characterization",
             "data": [
                 dictionary_formatter({"row": 1, "amount": 10.0}),
@@ -78,6 +81,7 @@ def test_empty_biosphere():
     resources = [
         {
             "name": "a",
+            "path": "a.npy",
             "matrix": "technosphere",
             "data": [
                 dictionary_formatter({"row": 3, "col": 5, "amount": 1.0}),
@@ -87,6 +91,7 @@ def test_empty_biosphere():
         },
         {
             "name": "basic-characterization",
+            "path": "b.npy",
             "matrix": "characterization",
             "data": [
                 dictionary_formatter({"row": 1, "amount": 10.0}),
@@ -139,6 +144,7 @@ def test_passing_zero_key():
     resources = [
         {
             "name": "a",
+            "path": "a.npy",
             "matrix": "technosphere",
             "data": [
                 dictionary_formatter({"row": 3, "col": 5, "amount": 1.0}),
@@ -148,6 +154,7 @@ def test_passing_zero_key():
         },
         {
             "name": "basic-biosphere",
+            "path": "b.npy",
             "matrix": "biosphere",
             "data": [
                 dictionary_formatter({"row": 1, "col": 5, "amount": 3.0}),
@@ -156,6 +163,7 @@ def test_passing_zero_key():
         },
         {
             "name": "basic-characterization",
+            "path": "c.npy",
             "matrix": "characterization",
             "data": [
                 dictionary_formatter({"row": 1, "amount": 10.0}),
@@ -176,6 +184,7 @@ def test_non_one_production_values():
     resources = [
         {
             "name": "a",
+            "path": "a.npy",
             "matrix": "technosphere",
             "data": [
                 # Modified production exchange
@@ -186,6 +195,7 @@ def test_non_one_production_values():
         },
         {
             "name": "basic-biosphere",
+            "path": "b.npy",
             "matrix": "biosphere",
             "data": [
                 dictionary_formatter({"row": 1, "col": 5, "amount": 3.0}),
@@ -194,6 +204,7 @@ def test_non_one_production_values():
         },
         {
             "name": "basic-characterization",
+            "path": "c.npy",
             "matrix": "characterization",
             "data": [
                 dictionary_formatter({"row": 1, "amount": 10.0}),
@@ -214,6 +225,7 @@ def test_substitution():
     resources = [
         {
             "name": "a",
+            "path": "a.npy",
             "matrix": "technosphere",
             "data": [
                 dictionary_formatter({"row": 3, "col": 5, "amount": 1.0}),
@@ -224,6 +236,7 @@ def test_substitution():
         },
         {
             "name": "basic-biosphere",
+            "path": "b.npy",
             "matrix": "biosphere",
             "data": [
                 dictionary_formatter({"row": 1, "col": 5, "amount": 3.0}),
@@ -232,6 +245,7 @@ def test_substitution():
         },
         {
             "name": "basic-characterization",
+            "path": "c.npy",
             "matrix": "characterization",
             "data": [
                 dictionary_formatter({"row": 1, "amount": 10.0}),
@@ -252,6 +266,7 @@ def test_circular_chains():
     resources = [
         {
             "name": "a",
+            "path": "a.npy",
             "matrix": "technosphere",
             "data": [
                 dictionary_formatter({"row": 3, "col": 5, "amount": 1.0}),
@@ -262,6 +277,7 @@ def test_circular_chains():
         },
         {
             "name": "basic-biosphere",
+            "path": "b.npy",
             "matrix": "biosphere",
             "data": [
                 dictionary_formatter({"row": 1, "col": 5, "amount": 3.0}),
@@ -270,6 +286,7 @@ def test_circular_chains():
         },
         {
             "name": "basic-characterization",
+            "path": "c.npy",
             "matrix": "characterization",
             "data": [
                 dictionary_formatter({"row": 1, "amount": 10.0}),
@@ -290,6 +307,7 @@ def test_non_square_technsphere():
     resources = [
         {
             "name": "a",
+            "path": "a.npy",
             "matrix": "technosphere",
             "data": [
                 dictionary_formatter({"row": 3, "col": 5, "amount": 1.0}),
@@ -300,6 +318,7 @@ def test_non_square_technsphere():
         },
         {
             "name": "basic-biosphere",
+            "path": "b.npy",
             "matrix": "biosphere",
             "data": [
                 dictionary_formatter({"row": 1, "col": 5, "amount": 3.0}),
@@ -308,6 +327,7 @@ def test_non_square_technsphere():
         },
         {
             "name": "basic-characterization",
+            "path": "c.npy",
             "matrix": "characterization",
             "data": [
                 dictionary_formatter({"row": 1, "amount": 10.0}),
@@ -334,6 +354,7 @@ def test_missing_technosphere():
     resources = [
         {
             "name": "basic-biosphere",
+            "path": "a.npy",
             "matrix": "biosphere",
             "data": [
                 dictionary_formatter({"row": 1, "col": 5, "amount": 3.0}),
@@ -342,6 +363,7 @@ def test_missing_technosphere():
         },
         {
             "name": "basic-characterization",
+            "path": "b.npy",
             "matrix": "characterization",
             "data": [
                 dictionary_formatter({"row": 1, "amount": 10.0}),

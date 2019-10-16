@@ -1,3 +1,5 @@
 numpy
 scipy
 pytest
+git+git://github.com/brightway-lca/brightway_projects@master#egg=brightway_projects
+git+git://github.com/brightway-lca/bw_processing@master#egg=bw_processing

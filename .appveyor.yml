@@ -16,8 +16,11 @@ install:
   - call %CONDA_INSTALL_LOCN%\Scripts\activate.bat
   - python --version
   - conda config --set always_yes yes
-  - conda update -y conda
-  - conda install -y -c conda-forge -c haasad pypardiso numpy scipy pytest pytest-cov coveralls
+  - conda update -y -q conda
+  - conda config --add channels conda-forge
+  - conda config --append channels cmutel
+  - conda config --append channels cmutel/label/nightly
+  - conda install -y -c conda-forge -c haasad brightway_projects-dev bw_processing-dev pypardiso numpy scipy pytest pytest-cov coveralls
   - pip install -e .
 
 test_script:

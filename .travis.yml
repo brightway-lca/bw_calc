@@ -22,15 +22,17 @@ before_install:
       export PATH="$HOME/miniconda/bin:$PATH";
       hash -r;
       conda config --set always_yes yes --set changeps1 no;
+      conda update -n base -c defaults conda;
       conda config --append channels conda-forge;
       conda config --append channels haasad;
-      conda update conda;
+      conda config --append channels cmutel;
+      conda config --append channels cmutel/label/nightly;
       conda info -a;
       echo $(python --version);
     fi
 install:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
-      conda create -n test-environment python=$TRAVIS_PYTHON_VERSION pypardiso numpy scipy pytest pytest-cov coveralls;
+      conda create -n test-environment python=$TRAVIS_PYTHON_VERSION brightway_projects-dev bw_processing-dev pypardiso numpy scipy pytest pytest-cov coveralls;
       source activate test-environment;
       pip install -e .;
     else
@@ -42,6 +44,7 @@ script:
       pwd;
       ls;
       pytest --cov=bw_calc;
+      coveralls;
       if [ "$TRAVIS_BRANCH" = "master" -a "$TRAVIS_PULL_REQUEST" = "false" ]; then
         conda install conda-build anaconda-client;
         bash ci/conda_upload.sh;
