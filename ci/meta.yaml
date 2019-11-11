@@ -28,7 +28,7 @@ test:
     - bw_calc
 
 about:
-  home: "https://github.com/brightway-lca/brightway_calc"
+  home: "https://github.com/brightway-lca/bw_calc"
   license: BSD License
   summary: 'Matrix calculations for Brightway framework'
 license_family: BSD

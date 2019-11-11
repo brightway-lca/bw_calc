@@ -33,7 +33,7 @@ setup(
         'scipy',
         'numpy',
     ],
-    url="https://github.com/brightway-lca/brightway_calc",
+    url="https://github.com/brightway-lca/bw_calc",
     long_description_content_type='text/markdown',
     long_description=open('README.md').read(),
     description='Matrix calculations for Brightway framework',
