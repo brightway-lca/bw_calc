@@ -1,5 +1,5 @@
 from pathlib import Path
-from brightway_projects.processing import (create_calculation_package, dictionary_formatter)
+from bw_projects.processing import (create_calculation_package, dictionary_formatter)
 
 base_dir = Path(__file__, "..").resolve()
 
