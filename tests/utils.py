@@ -81,7 +81,7 @@ def test_load_data_obj_directory():
 #         dtype=dtype)
 
 #     with BytesIO() as b:
-#         np.save(b, expected_array)
+#         np.save(b, expected_array, allow_pickle=False)
 #         b.seek(0)  # return to beginning of file
 #         actual_array = load_arrays([b])
 
