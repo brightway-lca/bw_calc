@@ -1,41 +1,35 @@
 from .version import version as __version__
 
-# __all__ = [
+__all__ = [
 #     'ComparativeMonteCarlo',
 #     'DenseLCA',
-#     'direct_solving_worker',
-#     'DirectSolvingMixin',
-#     'DirectSolvingMonteCarloLCA',
+    # 'DirectSolvingMixin',
+    'MonteCarloLCA',
 #     'GraphTraversal',
 #     'IndepentLCAMixin',
-#     'LCA',
+    'LCA',
 #     'LeastSquaresLCA',
-#     'load_calculation_package',
-#     'MatrixBuilder',
-#     'MonteCarloLCA',
+    'MatrixBuilder',
+    'IterativeMonteCarloLCA',
 #     'MultiLCA',
 #     'MultiMonteCarlo',
-#     'ParallelMonteCarlo',
+    'ParallelMonteCarlo',
 #     'ParameterVectorLCA',
-#     'save_calculation_package',
-#     'TechnosphereBiosphereMatrixBuilder',
-# ]
+]
 
 from .lca import LCA
 # from .dense_lca import DenseLCA
 # from .least_squares import LeastSquaresLCA
 # from .multi_lca import MultiLCA
 # from .graph_traversal import GraphTraversal
-# from .matrices import MatrixBuilder
-# from .utils import save_calculation_package, load_calculation_package
+from .matrices import MatrixBuilder
 
-# from .monte_carlo import (
+from .monte_carlo import (
 #     ComparativeMonteCarlo,
-#     direct_solving_worker,
 #     DirectSolvingMixin,
-#     DirectSolvingMonteCarloLCA,
-#     MonteCarloLCA,
+    MonteCarloLCA,
+    IterativeMonteCarloLCA,
 #     MultiMonteCarlo,
-#     ParallelMonteCarlo,
-# )
+    ParallelMonteCarlo,
+)
 # from .mc_vector import ParameterVectorLCA

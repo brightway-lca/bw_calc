@@ -22,7 +22,7 @@ def test_index_with_searchsorted_preserves_dtype():
 def test_index_with_arrays():
     inpt = np.array([1, 2, 3, 6, 9, 12, 9, 6, 5])
     mapping = {1: 0, 3: 2, 5: 3, 6: 4, 9: 5}
-    expected = np.array([0, MAX_INT_32, 2, 4, 5, MAX_INT_32, 5, 4, 3])
+    expected = np.array([0, MAX_SIGNED_32BIT_INT, 2, 4, 5, MAX_SIGNED_32BIT_INT, 5, 4, 3])
     output = np.zeros(inpt.size)
     index_with_arrays(inpt, output, mapping)
     assert np.allclose(output, expected)

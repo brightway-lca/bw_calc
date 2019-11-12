@@ -2,10 +2,11 @@ from pathlib import Path
 from io import BytesIO
 import numpy as np
 import pytest
+import multiprocessing
 from bw_calc.utils import (
    load_data_obj,
+   get_seed,
 )
-
 
 fixtures_dir = Path(__file__, "..").resolve() / "fixtures"
 
@@ -19,11 +20,11 @@ def test_load_data_obj_directory():
 
 
 
-# @pytest.mark.skipif(sys.version_info < (3,0), reason="MP pool changes")
-# def test_get_seeds_different_under_mp_pool():
-#     with multiprocessing.Pool(processes=4) as pool:
-#         results = list(pool.map(get_seed, [None] * 10))
-#     assert sorted(set(results)) == sorted(results)
+def test_get_seeds_different_under_mp_pool():
+    with multiprocessing.Pool(processes=4) as pool:
+        results = list(pool.map(get_seed, [None] * 10))
+    assert sorted(set(results)) == sorted(results)
+
 
 # def test_wrap_functional_unit():
 #     given = {17: 42}
