@@ -22,6 +22,7 @@ requirements:
     - numpy
     - scipy
     - pypardiso
+    - stats_arrays
 
 test:
   imports:

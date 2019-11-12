@@ -20,7 +20,7 @@ install:
   - conda config --add channels conda-forge
   - conda config --append channels cmutel
   - conda config --append channels cmutel/label/nightly
-  - conda install -y -c conda-forge -c haasad bw_projects-dev bw_processing-dev pypardiso numpy scipy pytest pytest-cov coveralls
+  - conda install -y -c conda-forge -c haasad bw_projects-dev bw_processing-dev stats_arrays pypardiso numpy scipy pytest pytest-cov coveralls
   - pip install -e .
 
 test_script:

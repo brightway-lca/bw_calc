@@ -1,2 +1,3 @@
-appdirs
-docopt
+scipy
+stats_arrays
+numpy

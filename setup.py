@@ -31,6 +31,7 @@ setup(
     license="BSD 3-clause",
     install_requires=[
         'scipy',
+        'stats_arrays',
         'numpy',
     ],
     url="https://github.com/brightway-lca/bw_calc",

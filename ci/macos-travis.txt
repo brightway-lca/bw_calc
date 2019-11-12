@@ -1,5 +1,6 @@
 numpy
 scipy
 pytest
+stats_arrays
 git+git://github.com/brightway-lca/bw_projects@master#egg=bw_projects
 git+git://github.com/brightway-lca/bw_processing@master#egg=bw_processing
