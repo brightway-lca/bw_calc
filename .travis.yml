@@ -4,6 +4,7 @@ matrix:
     - language: generic-covered
       python: 3.7
       os: osx
+      osx_image: xcode11.2
     - python: 3.7
       dist: xenial
       os: linux
